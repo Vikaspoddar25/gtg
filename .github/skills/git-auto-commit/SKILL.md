@@ -6,6 +6,8 @@ description: "Skill: Automatically commit and push changes to GitHub after any c
 
 Automatically commit and push all changes to the `Vikaspoddar25/gtg` GitHub repository after code modifications are made.
 
+**Pushing to `main` automatically triggers deployment to https://goodtog-b1420.web.app/ via GitHub Actions.**
+
 ## When to Invoke
 This skill should be triggered **after every meaningful code change** — including:
 - New files created
