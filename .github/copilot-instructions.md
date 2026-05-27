@@ -78,3 +78,10 @@ lib/
 - Widget tests: critical flows (auth, venue detail, payment)
 - Run: `flutter test`
 - Verify: `flutter analyze` (zero issues before any commit)
+
+## Git & Deployment
+- **GitHub repo**: `Vikaspoddar25/gtg` (https://github.com/Vikaspoddar25/gtg)
+- **Auto-commit**: After every code change, run `git add -A && git commit -m "<type>: <message>" && git push origin main`
+- **Commit convention**: `feat:` / `fix:` / `refactor:` / `style:` / `chore:` / `docs:`
+- **Never** force push or amend published commits without explicit user approval
+- Use the `git-auto-commit` skill or `git` agent to handle commits
