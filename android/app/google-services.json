@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "946045678627",
+    "project_id": "goodtog-b1420",
+    "storage_bucket": "goodtog-b1420.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:946045678627:android:f93eb17e3502ff4ed36d96",
+        "android_client_info": {
+          "package_name": "com.example.gtg"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAI_SmEG7K3-ZRBOB76kYaWYCD1_zmXr8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

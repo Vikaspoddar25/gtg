@@ -1,0 +1,169 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:gtg/providers/auth_provider.dart';
+import 'package:gtg/screens/good_to_go_screen.dart';
+import 'package:gtg/screens/home_screen.dart';
+import 'package:gtg/screens/location_permission_screen.dart';
+import 'package:gtg/screens/no_internet_screen.dart';
+import 'package:gtg/screens/notification_settings_screen.dart';
+import 'package:gtg/screens/otp_screen.dart';
+import 'package:gtg/screens/phone_input_screen.dart';
+import 'package:gtg/screens/gtg_flow_screen.dart';
+import 'package:gtg/screens/routes_screen.dart';
+import 'package:gtg/screens/search_screen.dart';
+import 'package:gtg/screens/settings_screen.dart';
+import 'package:gtg/screens/sign_in_screen.dart';
+import 'package:gtg/screens/sign_up_screen.dart';
+import 'package:gtg/screens/splash_screen.dart';
+import 'package:gtg/screens/verified_screen.dart';
+import 'package:gtg/widgets/gtg_bottom_nav.dart';
+
+/// Routes that don't require authentication.
+const _publicPaths = {
+  '/signin',
+  '/signup',
+  '/phone-input',
+  '/otp',
+  '/verified',
+  '/good-to-go',
+  '/welcome-back',
+  '/no-internet',
+};
+
+/// Key for the shell navigator (bottom-nav screens).
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Central router with ShellRoute for persistent bottom nav + auth guards.
+GoRouter buildRouter(AuthProvider authProvider) {
+  return GoRouter(
+    initialLocation: '/signin',
+    refreshListenable: authProvider,
+    redirect: (context, state) {
+      final isAuthed = authProvider.isAuthenticated;
+      final path = state.uri.path;
+      final isPublic = _publicPaths.contains(path);
+
+      // If not authenticated and trying to access protected route → sign in
+      if (!isAuthed && !isPublic) return '/signin';
+
+      // If authenticated and on sign-in/sign-up → go home
+      if (isAuthed && (path == '/signin' || path == '/signup')) return '/home';
+
+      return null; // No redirect
+    },
+    routes: [
+      // ── Public / Auth routes (no bottom nav) ────────────────────────────
+      GoRoute(
+        path: '/signin',
+        name: 'signin',
+        builder: (context, state) => const SignInScreen(),
+      ),
+      GoRoute(
+        path: '/signup',
+        name: 'signup',
+        builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/phone-input',
+        name: 'phoneInput',
+        builder: (context, state) => const PhoneInputScreen(),
+      ),
+      GoRoute(
+        path: '/otp',
+        name: 'otp',
+        builder: (context, state) => const OtpScreen(),
+      ),
+      GoRoute(
+        path: '/verified',
+        name: 'verified',
+        builder: (context, state) => const VerifiedScreen(),
+      ),
+      GoRoute(
+        path: '/good-to-go',
+        name: 'goodToGo',
+        builder: (context, state) => const GoodToGoScreen(),
+      ),
+      GoRoute(
+        path: '/welcome-back',
+        name: 'welcomeBack',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/no-internet',
+        name: 'noInternet',
+        builder: (context, state) => NoInternetScreen(
+          onRetry: () => state.uri.toString(),
+        ),
+      ),
+      GoRoute(
+        path: '/location-permission',
+        name: 'locationPermission',
+        builder: (context, state) => const LocationPermissionScreen(),
+      ),
+
+      // ── Shell route with persistent bottom nav ─────────────────────────
+      ShellRoute(
+        navigatorKey: _shellNavigatorKey,
+        builder: (context, state, child) {
+          return _ShellScaffold(state: state, child: child);
+        },
+        routes: [
+          GoRoute(
+            path: '/home',
+            name: 'home',
+            builder: (context, state) => const HomeScreen(),
+          ),
+          GoRoute(
+            path: '/search',
+            name: 'search',
+            builder: (context, state) => const SearchScreen(),
+          ),
+          GoRoute(
+            path: '/gtg-flow',
+            name: 'gtgFlow',
+            builder: (context, state) => const GtgFlowScreen(),
+          ),
+          GoRoute(
+            path: '/routes',
+            name: 'routes',
+            builder: (context, state) => const RoutesScreen(),
+          ),
+          GoRoute(
+            path: '/settings',
+            name: 'settings',
+            builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: '/notification-settings',
+            name: 'notificationSettings',
+            builder: (context, state) => const NotificationSettingsScreen(),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+/// Shell scaffold that wraps bottom-nav screens with the persistent nav bar.
+class _ShellScaffold extends StatelessWidget {
+  final GoRouterState state;
+  final Widget child;
+
+  const _ShellScaffold({required this.state, required this.child});
+
+  static const _tabPaths = ['/home', '/search', '/gtg-flow', '/routes', '/settings'];
+
+  @override
+  Widget build(BuildContext context) {
+    final path = state.uri.path;
+    final currentIndex = _tabPaths.indexOf(path).clamp(0, 4);
+
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: GtgBottomNav(
+        currentIndex: currentIndex,
+        onTap: (index) => context.go(_tabPaths[index]),
+      ),
+    );
+  }
+}

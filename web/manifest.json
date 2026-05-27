@@ -1,0 +1,38 @@
+{
+    "name": "GTG — Good To Go!",
+    "short_name": "GTG",
+    "id": "/",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#FFFFFF",
+    "theme_color": "#CE3131",
+    "description": "Discover venues, plan group outings, and explore your city with friends.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "categories": ["lifestyle", "entertainment", "food"],
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

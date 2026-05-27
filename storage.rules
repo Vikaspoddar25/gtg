@@ -1,0 +1,30 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── User profile photos ─────────────────────────────────────────────
+    // users/{userId}/avatar.{ext} — owner read/write; anyone authenticated can read
+    match /users/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024          // 5 MB max
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // ── Venue images ───────────────────────────────────────────────────
+    // venues/{venueId}/** — anyone authenticated can read; only the venue owner can write.
+    // Ownership is validated server-side via the Cloud Function that handles uploads;
+    // here we restrict by size and content type.
+    match /venues/{venueId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      // Writes are handled exclusively by Cloud Functions (admin SDK).
+      allow write: if false;
+    }
+
+    // ── Block all other paths ──────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
