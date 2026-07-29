@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gtg/providers/auth_provider.dart';
+import 'package:gtg/screens/edit_profile_screen.dart';
 import 'package:gtg/screens/good_to_go_screen.dart';
 import 'package:gtg/screens/home_screen.dart';
 import 'package:gtg/screens/location_permission_screen.dart';
@@ -163,6 +164,11 @@ GoRouter buildRouter(AuthProvider authProvider) {
             path: '/refer-earn',
             name: 'referEarn',
             builder: (context, state) => const ReferEarnScreen(),
+          ),
+          GoRoute(
+            path: '/edit-profile',
+            name: 'editProfile',
+            builder: (context, state) => const EditProfileScreen(),
           ),
         ],
       ),

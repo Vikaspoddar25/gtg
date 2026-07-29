@@ -155,6 +155,20 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
+  /// Updates editable profile fields (name/email/bio) for the signed-in user.
+  Future<bool> updateProfile({String? displayName, String? email, String? bio}) {
+    if (_user == null) return Future.value(false);
+    return _run(() async {
+      final updated = _user!.copyWith(
+        displayName: displayName,
+        email: email,
+        bio: bio,
+      );
+      await _authService.updateUserProfile(updated);
+      _user = updated;
+    });
+  }
+
   // ── Helpers ─────────────────────────────────────────────────────────────
 
   void clearError() {
