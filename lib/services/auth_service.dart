@@ -132,6 +132,18 @@ class AuthService {
     await _auth.signOut();
   }
 
+  // ── Delete Account ──────────────────────────────────────────────────────
+
+  /// Deletes the signed-in user's Firestore profile and Firebase Auth
+  /// account. Throws [fb.FirebaseAuthException] with code
+  /// 'requires-recent-login' if the user must re-authenticate first.
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    await _firestore.collection('users').doc(user.uid).delete();
+    await user.delete();
+  }
+
   // ── Firestore User Doc ──────────────────────────────────────────────────
 
   Future<UserModel?> getUserProfile(String uid) async {

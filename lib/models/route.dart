@@ -138,6 +138,16 @@ class RouteStop {
         'lat': lat,
         'lng': lng,
       };
+
+  RouteStop copyWith({int? order}) => RouteStop(
+        venueId: venueId,
+        venueName: venueName,
+        venueImage: venueImage,
+        order: order ?? this.order,
+        estimatedDuration: estimatedDuration,
+        lat: lat,
+        lng: lng,
+      );
 }
 
 class RoutePreferences {

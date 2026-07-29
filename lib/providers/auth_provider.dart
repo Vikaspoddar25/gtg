@@ -143,6 +143,18 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Permanently deletes the current user's account & profile data.
+  /// Returns false (with [errorMessage] set) on failure, e.g. when
+  /// Firebase requires a recent sign-in before allowing deletion.
+  Future<bool> deleteAccount() {
+    return _run(() async {
+      await _authService.deleteAccount();
+      _isAuthenticated = false;
+      _user = null;
+      _phoneNumber = '';
+    });
+  }
+
   // ── Helpers ─────────────────────────────────────────────────────────────
 
   void clearError() {
@@ -188,6 +200,8 @@ class AuthProvider extends ChangeNotifier {
         return 'Too many attempts. Please try again later.';
       case 'invalid-email':
         return 'Please enter a valid email address.';
+      case 'requires-recent-login':
+        return 'For your security, please sign in again before deleting your account.';
       default:
         return 'Something went wrong. Please try again.';
     }

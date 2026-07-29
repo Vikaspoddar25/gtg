@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "goodtog-b1420"
-  }
+    "default": "gtg-now"
+  },
+  "targets": {},
+  "etags": {}
 }

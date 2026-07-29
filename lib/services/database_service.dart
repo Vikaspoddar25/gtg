@@ -112,6 +112,36 @@ class DatabaseService {
       .snapshots()
       .map((snap) => snap.docs.map(Venue.fromFirestore).toList());
 
+  /// Prefix search on venue name (Firestore "search-as-you-type" pattern).
+  /// Falls back to matching `tags`/`category` client-side for short queries.
+  Future<List<Venue>> searchVenues(String query, {int limit = 20}) async {
+    final q = query.trim();
+    if (q.isEmpty) return [];
+    final snap = await _venuesCol
+        .where('isActive', isEqualTo: true)
+        .orderBy('name')
+        .startAt([q])
+        .endAt(['$q\uf8ff'])
+        .limit(limit)
+        .get();
+    final byName = snap.docs.map(Venue.fromFirestore).toList();
+    if (byName.isNotEmpty) return byName;
+
+    // Fallback: match category/tags for queries that aren't name prefixes.
+    final all = await _venuesCol
+        .where('isActive', isEqualTo: true)
+        .limit(100)
+        .get();
+    final lower = q.toLowerCase();
+    return all.docs
+        .map(Venue.fromFirestore)
+        .where((v) =>
+            v.category.toLowerCase().contains(lower) ||
+            v.tags.any((t) => t.toLowerCase().contains(lower)))
+        .take(limit)
+        .toList();
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   // REVIEWS — /venues/{venueId}/reviews/{reviewId}
   // ═══════════════════════════════════════════════════════════════════════

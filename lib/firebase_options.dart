@@ -41,48 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBnRHzlJuFpaju0SNq5LWLI4Svloqp4qL4',
-    appId: '1:946045678627:web:b41f54124524288ad36d96',
-    messagingSenderId: '946045678627',
-    projectId: 'goodtog-b1420',
-    authDomain: 'goodtog-b1420.firebaseapp.com',
-    storageBucket: 'goodtog-b1420.firebasestorage.app',
-    measurementId: 'G-H22KWTFG0B',
+    apiKey: 'AIzaSyBZZqPu759RjMymSIxHSUKWolSchbrvZpU',
+    appId: '1:678663143276:web:37df291c8a1a6c1729fd49',
+    messagingSenderId: '678663143276',
+    projectId: 'gtg-now',
+    authDomain: 'gtg-now.firebaseapp.com',
+    storageBucket: 'gtg-now.firebasestorage.app',
+    measurementId: 'G-E4NNEF690J',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAI_SmEG7K3-ZRBOB76kYaWYCD1_zmXr8A',
-    appId: '1:946045678627:android:f93eb17e3502ff4ed36d96',
-    messagingSenderId: '946045678627',
-    projectId: 'goodtog-b1420',
-    storageBucket: 'goodtog-b1420.firebasestorage.app',
+    apiKey: 'AIzaSyATHDMKMnEfc8fyDInQ7HrwPpKhTvFAjYg',
+    appId: '1:678663143276:android:0f2e9a020ab5730329fd49',
+    messagingSenderId: '678663143276',
+    projectId: 'gtg-now',
+    storageBucket: 'gtg-now.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBjWrccLTBnjoiNpdNFsG7cg__Dc9tPw7Q',
-    appId: '1:946045678627:ios:499099b273a01b59d36d96',
-    messagingSenderId: '946045678627',
-    projectId: 'goodtog-b1420',
-    storageBucket: 'goodtog-b1420.firebasestorage.app',
+    apiKey: 'AIzaSyC_MKOTsKMOyTdiBnUWX7-1vrVz681PIXk',
+    appId: '1:678663143276:ios:35f9c3a75ad4b1bb29fd49',
+    messagingSenderId: '678663143276',
+    projectId: 'gtg-now',
+    storageBucket: 'gtg-now.firebasestorage.app',
     iosBundleId: 'com.example.gtg',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBjWrccLTBnjoiNpdNFsG7cg__Dc9tPw7Q',
-    appId: '1:946045678627:ios:499099b273a01b59d36d96',
-    messagingSenderId: '946045678627',
-    projectId: 'goodtog-b1420',
-    storageBucket: 'goodtog-b1420.firebasestorage.app',
+    apiKey: 'AIzaSyC_MKOTsKMOyTdiBnUWX7-1vrVz681PIXk',
+    appId: '1:678663143276:ios:35f9c3a75ad4b1bb29fd49',
+    messagingSenderId: '678663143276',
+    projectId: 'gtg-now',
+    storageBucket: 'gtg-now.firebasestorage.app',
     iosBundleId: 'com.example.gtg',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBnRHzlJuFpaju0SNq5LWLI4Svloqp4qL4',
-    appId: '1:946045678627:web:e03203c6c72eff13d36d96',
-    messagingSenderId: '946045678627',
-    projectId: 'goodtog-b1420',
-    authDomain: 'goodtog-b1420.firebaseapp.com',
-    storageBucket: 'goodtog-b1420.firebasestorage.app',
-    measurementId: 'G-XNN19RMMLT',
+    apiKey: 'AIzaSyBZZqPu759RjMymSIxHSUKWolSchbrvZpU',
+    appId: '1:678663143276:web:8c44a3b5bc2f8b6529fd49',
+    messagingSenderId: '678663143276',
+    projectId: 'gtg-now',
+    authDomain: 'gtg-now.firebaseapp.com',
+    storageBucket: 'gtg-now.firebasestorage.app',
+    measurementId: 'G-XNLLSZPBGB',
   );
+
 }

@@ -105,4 +105,43 @@ class VenueProvider extends ChangeNotifier {
     if (_currentCity.isEmpty) return;
     await loadVenues(city: _currentCity, category: _currentCategory);
   }
+
+  // ── Search ───────────────────────────────────────────────────────────────
+
+  List<Venue> _searchResults = [];
+  bool _isSearching = false;
+  String? _searchError;
+  String _lastQuery = '';
+
+  List<Venue> get searchResults => List.unmodifiable(_searchResults);
+  bool get isSearching => _isSearching;
+  String? get searchError => _searchError;
+  String get lastQuery => _lastQuery;
+
+  Future<void> searchVenues(String query) async {
+    _lastQuery = query;
+    if (query.trim().isEmpty) {
+      _searchResults = [];
+      notifyListeners();
+      return;
+    }
+    _isSearching = true;
+    _searchError = null;
+    notifyListeners();
+    try {
+      _searchResults = await _db.searchVenues(query);
+    } catch (e) {
+      _searchError = e.toString();
+    } finally {
+      _isSearching = false;
+      notifyListeners();
+    }
+  }
+
+  void clearSearch() {
+    _searchResults = [];
+    _lastQuery = '';
+    _searchError = null;
+    notifyListeners();
+  }
 }
