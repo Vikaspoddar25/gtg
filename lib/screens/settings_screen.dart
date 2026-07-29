@@ -68,7 +68,9 @@ class SettingsScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       // Profile section
-                      Row(
+                      GestureDetector(
+                        onTap: () => context.push('/edit-profile'),
+                        child: Row(
                         children: [
                           // Avatar
                           Container(
@@ -114,13 +116,19 @@ class SettingsScreen extends StatelessWidget {
                               ),
                             ],
                           ),
+                          const Spacer(),
+                          const Icon(Icons.chevron_right,
+                              color: AppColors.textPrimary),
                         ],
+                        ),
                       ),
 
                       const SizedBox(height: 24),
 
                       // Refer and Earn banner
-                      Container(
+                      GestureDetector(
+                        onTap: () => context.push('/refer-earn'),
+                        child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -192,6 +200,7 @@ class SettingsScreen extends StatelessWidget {
                               size: 28,
                             ),
                           ],
+                        ),
                         ),
                       ),
 

@@ -11,6 +11,7 @@ import 'package:gtg/screens/otp_screen.dart';
 import 'package:gtg/screens/phone_input_screen.dart';
 import 'package:gtg/screens/gtg_flow_screen.dart';
 import 'package:gtg/screens/generating_route_screen.dart';
+import 'package:gtg/screens/refer_earn_screen.dart';
 import 'package:gtg/screens/routes_screen.dart';
 import 'package:gtg/screens/search_screen.dart';
 import 'package:gtg/screens/settings_screen.dart';
@@ -157,6 +158,11 @@ GoRouter buildRouter(AuthProvider authProvider) {
             builder: (context, state) => VenueDetailScreen(
               venueId: state.pathParameters['venueId']!,
             ),
+          ),
+          GoRoute(
+            path: '/refer-earn',
+            name: 'referEarn',
+            builder: (context, state) => const ReferEarnScreen(),
           ),
         ],
       ),
