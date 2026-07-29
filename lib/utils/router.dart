@@ -4,6 +4,7 @@ import 'package:gtg/providers/auth_provider.dart';
 import 'package:gtg/screens/good_to_go_screen.dart';
 import 'package:gtg/screens/home_screen.dart';
 import 'package:gtg/screens/location_permission_screen.dart';
+import 'package:gtg/screens/news_screen.dart';
 import 'package:gtg/screens/no_internet_screen.dart';
 import 'package:gtg/screens/notification_settings_screen.dart';
 import 'package:gtg/screens/otp_screen.dart';
@@ -129,6 +130,11 @@ GoRouter buildRouter(AuthProvider authProvider) {
             builder: (context, state) => const RoutesScreen(),
           ),
           GoRoute(
+            path: '/news',
+            name: 'news',
+            builder: (context, state) => const NewsScreen(),
+          ),
+          GoRoute(
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsScreen(),
@@ -151,19 +157,27 @@ class _ShellScaffold extends StatelessWidget {
 
   const _ShellScaffold({required this.state, required this.child});
 
-  static const _tabPaths = ['/home', '/search', '/gtg-flow', '/routes', '/settings'];
+  /// Groups of paths that share a bottom-nav tab index. `/gtg-flow` and
+  /// `/routes` are the same "Route" tab — the wizard feeds into the
+  /// generated route, so the tab stays highlighted across both.
+  static const _tabGroups = [
+    ['/home'],
+    ['/search'],
+    ['/gtg-flow', '/routes'],
+    ['/news'],
+    ['/settings'],
+  ];
 
   @override
   Widget build(BuildContext context) {
     final path = state.uri.path;
-    final currentIndex = _tabPaths.indexOf(path).clamp(0, 4);
+    final currentIndex = _tabGroups
+        .indexWhere((group) => group.contains(path))
+        .clamp(0, _tabGroups.length - 1);
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: GtgBottomNav(
-        currentIndex: currentIndex,
-        onTap: (index) => context.go(_tabPaths[index]),
-      ),
+      bottomNavigationBar: GtgBottomNav(currentIndex: currentIndex),
     );
   }
 }

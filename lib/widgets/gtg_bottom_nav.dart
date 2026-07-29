@@ -16,7 +16,7 @@ class GtgBottomNav extends StatelessWidget {
   static const List<_NavItem> _items = [
     _NavItem(icon: Icons.home_rounded, label: 'Home'),
     _NavItem(icon: Icons.search_rounded, label: 'Search'),
-    _NavItem(icon: Icons.group_rounded, label: 'People'),
+    _NavItem(icon: Icons.alt_route_rounded, label: 'Route'),
     _NavItem(icon: Icons.article_rounded, label: 'News'),
     _NavItem(icon: Icons.person_rounded, label: 'Profile'),
   ];
@@ -25,7 +25,7 @@ class GtgBottomNav extends StatelessWidget {
     '/home',
     '/search',
     '/gtg-flow',
-    '/routes',
+    '/news',
     '/settings',
   ];
 
