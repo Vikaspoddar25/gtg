@@ -10,6 +10,7 @@ import 'package:gtg/screens/notification_settings_screen.dart';
 import 'package:gtg/screens/otp_screen.dart';
 import 'package:gtg/screens/phone_input_screen.dart';
 import 'package:gtg/screens/gtg_flow_screen.dart';
+import 'package:gtg/screens/generating_route_screen.dart';
 import 'package:gtg/screens/routes_screen.dart';
 import 'package:gtg/screens/search_screen.dart';
 import 'package:gtg/screens/settings_screen.dart';
@@ -126,6 +127,11 @@ GoRouter buildRouter(AuthProvider authProvider) {
             builder: (context, state) => const GtgFlowScreen(),
           ),
           GoRoute(
+            path: '/generating-route',
+            name: 'generatingRoute',
+            builder: (context, state) => const GeneratingRouteScreen(),
+          ),
+          GoRoute(
             path: '/routes',
             name: 'routes',
             builder: (context, state) => const RoutesScreen(),
@@ -171,7 +177,7 @@ class _ShellScaffold extends StatelessWidget {
   static const _tabGroups = [
     ['/home'],
     ['/search'],
-    ['/gtg-flow', '/routes'],
+    ['/gtg-flow', '/generating-route', '/routes'],
     ['/news'],
     ['/settings'],
   ];

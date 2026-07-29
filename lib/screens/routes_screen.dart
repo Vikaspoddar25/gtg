@@ -1,12 +1,16 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:gtg/models/venue.dart';
+import 'package:provider/provider.dart';
+import 'package:gtg/models/route.dart';
+import 'package:gtg/providers/auth_provider.dart';
+import 'package:gtg/providers/route_provider.dart';
+import 'package:gtg/providers/venue_provider.dart';
 import 'package:gtg/theme/app_colors.dart';
 
 /// Routes screen — shows the generated route of venues after GTG flow.
 /// Has 3 states: edit (reorder/delete/refresh), active (show code/cancel),
-/// and progress (finished/code revealed).
+/// and progress (finished/code revealed). Backed by [RouteProvider.selected].
 class RoutesScreen extends StatefulWidget {
   const RoutesScreen({super.key});
 
@@ -17,27 +21,37 @@ class RoutesScreen extends StatefulWidget {
 enum RouteScreenState { edit, active, progress }
 
 class _RoutesScreenState extends State<RoutesScreen> {
-  RouteScreenState _state = RouteScreenState.edit;
-
-  // Dummy route stops using mock venues
-  late List<_RouteStop> _stops;
-
   @override
   void initState() {
     super.initState();
-    _stops = [
-      _RouteStop(venue: mockVenues[0], uniqueCode: 'FXBLP109'),
-      _RouteStop(venue: mockVenues[0], uniqueCode: 'FXBLP110'),
-      _RouteStop(venue: mockVenues[0], uniqueCode: 'FXBLP108'),
-    ];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final userId = context.read<AuthProvider>().user?.uid;
+      if (userId != null) {
+        context.read<RouteProvider>().startListening(userId);
+      }
+      if (context.read<VenueProvider>().venues.isEmpty) {
+        context.read<VenueProvider>().loadVenues(city: 'New Delhi');
+      }
+    });
   }
 
-  void _onGoodToGo() {
-    setState(() => _state = RouteScreenState.active);
+  RouteScreenState _stateFor(GtgRoute route) {
+    switch (route.status) {
+      case 'active':
+        return RouteScreenState.active;
+      case 'completed':
+        return RouteScreenState.progress;
+      default:
+        return RouteScreenState.edit;
+    }
   }
 
-  void _onStopHere() {
-    // Show thank you overlay then go home
+  Future<void> _onGoodToGo(RouteProvider rp) => rp.activateSelectedRoute();
+
+  Future<void> _onStopHere(RouteProvider rp) async {
+    await rp.completeSelectedRoute();
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -47,46 +61,51 @@ class _RoutesScreenState extends State<RoutesScreen> {
     });
   }
 
-  void _onRegenerate() {
-    // Shuffle stops as dummy regeneration
-    setState(() {
-      _stops = _stops.reversed.toList();
-    });
+  Future<void> _onRegenerate(RouteProvider rp, VenueProvider vp, GtgRoute route) async {
+    for (var i = 0; i < route.stops.length; i++) {
+      await _refreshStop(rp, vp, i, route);
+    }
   }
 
-  void _moveUp(int index) {
-    if (index <= 0) return;
-    setState(() {
-      final item = _stops.removeAt(index);
-      _stops.insert(index - 1, item);
-    });
+  Future<void> _moveUp(RouteProvider rp, int index) {
+    if (index <= 0) return Future.value();
+    return rp.reorderSelectedStop(index, index - 1);
   }
 
-  void _moveDown(int index) {
-    if (index >= _stops.length - 1) return;
-    setState(() {
-      final item = _stops.removeAt(index);
-      _stops.insert(index + 1, item);
-    });
+  Future<void> _moveDown(RouteProvider rp, int index, int length) {
+    if (index >= length - 1) return Future.value();
+    return rp.reorderSelectedStop(index, index + 1);
   }
 
-  void _removeStop(int index) {
-    setState(() => _stops.removeAt(index));
-  }
+  Future<void> _removeStop(RouteProvider rp, int index) =>
+      rp.removeStopFromSelected(index);
 
-  void _refreshStop(int index) {
-    // Cycle through mockVenues as dummy data
-    setState(() {
-      final nextVenue = mockVenues[(mockVenues.indexOf(_stops[index].venue) + 1) % mockVenues.length];
-      _stops[index] = _RouteStop(
-        venue: nextVenue,
-        uniqueCode: _stops[index].uniqueCode,
-      );
-    });
+  Future<void> _refreshStop(
+      RouteProvider rp, VenueProvider vp, int index, GtgRoute route) async {
+    final used = route.stops.map((s) => s.venueId).toSet();
+    final candidates = vp.venues.where((v) => !used.contains(v.id)).toList();
+    if (candidates.isEmpty) return;
+    final v = candidates.first;
+    await rp.regenerateStopInSelected(
+      index,
+      RouteStop(
+        venueId: v.id,
+        venueName: v.name,
+        venueImage: v.imageUrl,
+        order: index,
+        estimatedDuration: route.stops[index].estimatedDuration,
+        lat: v.location?.latitude ?? 0,
+        lng: v.location?.longitude ?? 0,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final routeProvider = context.watch<RouteProvider>();
+    final venueProvider = context.watch<VenueProvider>();
+    final route = routeProvider.selected;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -134,67 +153,128 @@ class _RoutesScreenState extends State<RoutesScreen> {
                   ),
                   const Divider(height: 1, color: AppColors.divider),
 
-                  // Route stops list
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 180),
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < _stops.length; i++) ...[
-                            _RouteStopCard(
-                              index: i,
-                              stop: _stops[i],
-                              isLast: i == _stops.length - 1,
-                              state: _state,
-                              onMoveUp: () => _moveUp(i),
-                              onMoveDown: () => _moveDown(i),
-                              onRemove: () => _removeStop(i),
-                              onRefresh: () => _refreshStop(i),
-                            ),
-                          ],
-                          if (_state == RouteScreenState.edit) ...[
-                            const SizedBox(height: 24),
-                            GestureDetector(
-                              onTap: _onRegenerate,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Regenerate',
+                  if (route == null)
+                    Expanded(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.alt_route_rounded,
+                                  size: 64, color: AppColors.primaryLight),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'No route yet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Start the GTG flow from Home to generate a route.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: AppColors.textPrimary),
+                              ),
+                              const SizedBox(height: 20),
+                              GestureDetector(
+                                onTap: () => context.go('/gtg-flow'),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: const Text(
+                                    "Let's Good To Go!",
                                     style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.primary.withValues(alpha: 0.7),
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.refresh,
-                                    color: AppColors.primary.withValues(alpha: 0.7),
-                                    size: 22,
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else ...[
+                    // Route stops list
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 180),
+                        child: Column(
+                          children: [
+                            for (var i = 0; i < route.stops.length; i++) ...[
+                              _RouteStopCard(
+                                index: i,
+                                stop: route.stops[i],
+                                routeId: route.id,
+                                isLast: i == route.stops.length - 1,
+                                state: _stateFor(route),
+                                onMoveUp: () => _moveUp(routeProvider, i),
+                                onMoveDown: () => _moveDown(
+                                    routeProvider, i, route.stops.length),
+                                onRemove: () => _removeStop(routeProvider, i),
+                                onRefresh: () => _refreshStop(
+                                    routeProvider, venueProvider, i, route),
+                              ),
+                            ],
+                            if (_stateFor(route) == RouteScreenState.edit) ...[
+                              const SizedBox(height: 24),
+                              GestureDetector(
+                                onTap: () => _onRegenerate(
+                                    routeProvider, venueProvider, route),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Regenerate',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.refresh,
+                                      color:
+                                          AppColors.primary.withValues(alpha: 0.7),
+                                      size: 22,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
 
               // Bottom action button
-              Positioned(
-                bottom: 0,
-                left: 20,
-                right: 20,
-                child: _state == RouteScreenState.edit
-                    ? _GoodToGoButton(onTap: _onGoodToGo, isReady: true)
-                    : _StopHereButton(onTap: _onStopHere),
-              ),
-
-
+              if (route != null)
+                Positioned(
+                  bottom: 0,
+                  left: 20,
+                  right: 20,
+                  child: _stateFor(route) == RouteScreenState.edit
+                      ? _GoodToGoButton(
+                          onTap: () => _onGoodToGo(routeProvider),
+                          isReady: route.stops.isNotEmpty,
+                        )
+                      : _stateFor(route) == RouteScreenState.active
+                          ? _StopHereButton(onTap: () => _onStopHere(routeProvider))
+                          : const SizedBox.shrink(),
+                ),
             ],
           ),
         ),
@@ -203,21 +283,11 @@ class _RoutesScreenState extends State<RoutesScreen> {
   }
 }
 
-// ── Route stop data ─────────────────────────────────────────────────────────
-class _RouteStop {
-  final Venue venue;
-  final String uniqueCode;
-
-  _RouteStop({
-    required this.venue,
-    required this.uniqueCode,
-  });
-}
-
 // ── Route stop card ─────────────────────────────────────────────────────────
 class _RouteStopCard extends StatefulWidget {
   final int index;
-  final _RouteStop stop;
+  final RouteStop stop;
+  final String routeId;
   final bool isLast;
   final RouteScreenState state;
   final VoidCallback onMoveUp;
@@ -228,6 +298,7 @@ class _RouteStopCard extends StatefulWidget {
   const _RouteStopCard({
     required this.index,
     required this.stop,
+    required this.routeId,
     required this.isLast,
     required this.state,
     required this.onMoveUp,
@@ -243,9 +314,18 @@ class _RouteStopCard extends StatefulWidget {
 class _RouteStopCardState extends State<_RouteStopCard> {
   bool _codeVisible = false;
 
+  /// Client-side display code — a real check-in code system is a separate
+  /// backlog item; this keeps the UI functional in the meantime.
+  String get _uniqueCode {
+    final prefix = widget.routeId.length >= 4
+        ? widget.routeId.substring(0, 4).toUpperCase()
+        : widget.routeId.toUpperCase().padRight(4, 'X');
+    return '$prefix${100 + widget.index}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final venue = widget.stop.venue;
+    final stop = widget.stop;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -317,7 +397,7 @@ class _RouteStopCardState extends State<_RouteStopCard> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: CachedNetworkImage(
-                              imageUrl: venue.imageUrl,
+                              imageUrl: stop.venueImage,
                               width: 70,
                               height: 70,
                               fit: BoxFit.cover,
@@ -337,55 +417,21 @@ class _RouteStopCardState extends State<_RouteStopCard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  venue.name,
+                                  stop.venueName,
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.statusBlue,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      venue.status,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.statusBlue,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.star_rounded,
-                                        size: 16, color: Color(0xFFFFB800)),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      venue.rating.toStringAsFixed(1),
-                                      style: const TextStyle(fontSize: 13),
-                                    ),
-                                  ],
-                                ),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Text(
-                                    'Avg. ₹${venue.avgPricePerPerson}/ Person',
+                                if (stop.estimatedDuration > 0)
+                                  Text(
+                                    '${stop.estimatedDuration} min',
                                     style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                      color: AppColors.statusBlue,
                                     ),
                                   ),
-                                ),
                               ],
                             ),
                           ),
@@ -417,9 +463,7 @@ class _RouteStopCardState extends State<_RouteStopCard> {
                                   ),
                                   alignment: Alignment.center,
                                   child: Text(
-                                    _codeVisible
-                                        ? widget.stop.uniqueCode
-                                        : 'Show unique code',
+                                    _codeVisible ? _uniqueCode : 'Show unique code',
                                     style: TextStyle(
                                       color: _codeVisible
                                           ? AppColors.primary

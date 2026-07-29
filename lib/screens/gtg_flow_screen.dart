@@ -37,8 +37,8 @@ class _GtgFlowScreenState extends State<GtgFlowScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Final step — Find → go to routes
-      context.go('/routes');
+      // Final step — Find → generate the real route, then view it.
+      context.go('/generating-route');
     }
   }
 
