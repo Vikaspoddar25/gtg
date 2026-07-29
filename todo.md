@@ -93,13 +93,13 @@ Use `@agent-name` with the relevant skill/workflow to complete each task.
 
 **Agent**: `@flutter-ui`, `@firebase-backend` | **Skills**: `figma-to-flutter`, `firebase-service`
 
-- [ ] Integrate Mapbox map (`mapbox_maps_flutter`) into `HomeScreen`
+- [x] Integrate Mapbox map (`mapbox_maps_flutter`) into `HomeScreen` — mobile only; web uses a static placeholder (`MiniMapView`) until Mapbox's web SDK is stable
 - [ ] Show venue markers on map from Firestore data
-- [ ] Build `VenueDetailScreen` from Figma node `349:144`
+- [x] Build `VenueDetailScreen` — carousel, about, venue info grid, location map, add-to-route CTA
 - [ ] Build `PaymentScreen` from Figma node `360:382`
 - [ ] Build venue detail variants (nodes `360:452`, `369:914`, `369:1143`)
-- [ ] Implement venue search with filters (category, price range, rating, distance)
-- [ ] Replace `mockVenues` with Firestore real-time data on `HomeScreen`
+- [x] Implement venue search with filters — real Search screen (search bar, recent searches, results) wired to `VenueProvider.searchVenues`
+- [x] Replace `mockVenues` with Firestore real-time data on `HomeScreen`
 - [ ] Seed initial venue data (manual Firestore import or Cloud Function)
 
 ---
@@ -110,11 +110,11 @@ Use `@agent-name` with the relevant skill/workflow to complete each task.
 
 - [ ] Integrate Mapbox Directions API for route calculation
 - [ ] Build `RouteOverviewScreen` from Figma node `389:121` — map + route polyline + stops
-- [ ] Build `RouteStopsScreen` from Figma node `389:589` — ordered stop list with ETA
+- [x] Build `RouteStopsScreen` — ordered stop list with reorder/remove/regenerate, wired to real `RouteProvider` data
 - [ ] Build route variants (nodes `389:761`, `389:861`, `389:965`, `389:1069`, `389:1173`, `389:1277`, `389:1369`)
-- [ ] Wire GTG Flow wizard → route generation (friends, budget, modes, hours, range → filter venues → route)
-- [ ] Implement route CRUD in `RouteService` (save, edit, delete, share)
-- [ ] Save/load routes from Firestore `routes` collection
+- [x] Wire GTG Flow wizard → route generation (friends, budget, modes, hours, range → filter venues → route)
+- [x] Implement route CRUD in `RouteProvider` (add/remove/reorder/regenerate stop, activate, complete)
+- [x] Save/load routes from Firestore `routes` collection
 
 ---
 
@@ -122,14 +122,14 @@ Use `@agent-name` with the relevant skill/workflow to complete each task.
 
 **Agent**: `@flutter-ui`, `@firebase-backend` | **Skills**: `figma-to-flutter`, `firebase-service`
 
-- [ ] Build `EditProfileScreen` from Figma node `279:84` — name, photo, bio upload
+- [x] Build `EditProfileScreen` — name/mobile/email, change mobile number, delete account
 - [ ] Build `ProfileScreen` from Figma node `214:4` (and variant `879:293`)
 - [ ] Build `NotificationsScreen` from Figma node `293:352` (and variant `293:610`)
-- [ ] Wire `SettingsScreen` to real user data from Firestore
+- [x] Wire `SettingsScreen` to real user data from Firestore
 - [ ] Implement profile photo upload to Firebase Storage
 - [ ] Set up FCM push notifications (web + mobile)
 - [ ] Implement notification preferences (push toggle, WhatsApp external link)
-- [ ] Implement Refer & Earn feature (generate shareable referral link)
+- [x] Implement Refer & Earn feature (referral code + WhatsApp share link)
 
 ---
 
