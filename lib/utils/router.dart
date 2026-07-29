@@ -16,6 +16,7 @@ import 'package:gtg/screens/settings_screen.dart';
 import 'package:gtg/screens/sign_in_screen.dart';
 import 'package:gtg/screens/sign_up_screen.dart';
 import 'package:gtg/screens/splash_screen.dart';
+import 'package:gtg/screens/venue_detail_screen.dart';
 import 'package:gtg/screens/verified_screen.dart';
 import 'package:gtg/widgets/gtg_bottom_nav.dart';
 
@@ -143,6 +144,13 @@ GoRouter buildRouter(AuthProvider authProvider) {
             path: '/notification-settings',
             name: 'notificationSettings',
             builder: (context, state) => const NotificationSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/venue/:venueId',
+            name: 'venueDetail',
+            builder: (context, state) => VenueDetailScreen(
+              venueId: state.pathParameters['venueId']!,
+            ),
           ),
         ],
       ),

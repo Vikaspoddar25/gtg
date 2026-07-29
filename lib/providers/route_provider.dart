@@ -175,6 +175,45 @@ class RouteProvider extends ChangeNotifier {
 
   // ── Draft-route stop mutation (Routes screen edit state) ────────────────
 
+  /// Adds [venue] as a stop to the current draft route, creating a fresh
+  /// draft route first if none is selected yet (e.g. user tapped
+  /// "Add to the route" from Venue Detail without running the GTG flow).
+  Future<void> addVenueToRoute(String userId, Venue venue) async {
+    final stop = RouteStop(
+      venueId: venue.id,
+      venueName: venue.name,
+      venueImage: venue.imageUrl,
+      order: 0,
+      estimatedDuration: 60,
+      lat: venue.location?.latitude ?? 0,
+      lng: venue.location?.longitude ?? 0,
+    );
+    if (_selected == null || _selected!.status != 'draft') {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+      try {
+        final route = GtgRoute(
+          id: '',
+          userId: userId,
+          stops: [stop],
+          preferences: const RoutePreferences(),
+          status: 'draft',
+          createdAt: DateTime.now(),
+        );
+        final id = await _db.addRoute(route);
+        _selected = await _db.getRoute(id);
+      } catch (e) {
+        _error = e.toString();
+      } finally {
+        _isLoading = false;
+        notifyListeners();
+      }
+      return;
+    }
+    await addStopToSelected(stop);
+  }
+
   Future<void> addStopToSelected(RouteStop stop) async {
     if (_selected == null) return;
     final stops = [..._selected!.stops, stop.copyWith(order: _selected!.stops.length)];
