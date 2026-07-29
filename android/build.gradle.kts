@@ -2,6 +2,20 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Mapbox Maps SDK (native Android AAR). Requires a *secret* downloads
+        // token from https://console.mapbox.com/account/access-tokens/ with the
+        // "Downloads:Read" scope. Put it in ~/.gradle/gradle.properties (NOT this
+        // repo) as: MAPBOX_DOWNLOADS_TOKEN=sk.xxx
+        maven {
+            url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+            credentials {
+                username = "mapbox"
+                password = (providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orNull ?: "")
+            }
+        }
     }
 }
 

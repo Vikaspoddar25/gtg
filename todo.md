@@ -41,7 +41,7 @@ Use `@agent-name` with the relevant skill/workflow to complete each task.
 
 **Agent**: `@firebase-backend` | **Skills**: `firebase-service`, `route-guard`
 
-- [x] Verify Firebase project config — `goodtog-b1420` configured in `firebase_options.dart`
+- [x] Verify Firebase project config — `gtg-now` configured in `firebase_options.dart`
 - [x] Deploy Firestore security rules — comprehensive rules in `firestore.rules`
 - [ ] Configure Firebase Auth providers (Phone OTP, Email/Password, Google, Apple) — **MANUAL: Firebase Console**
 - [x] Set up Firebase Storage bucket + storage security rules — `storage.rules` created
@@ -213,7 +213,7 @@ Use `@agent-name` with the relevant skill/workflow to complete each task.
 - [ ] `flutter analyze` — zero issues
 - [ ] `flutter test` — all tests pass
 - [ ] `flutter build web --release`
-- [ ] `firebase deploy --only hosting` (to `gtg-app.web.app`)
+- [ ] `firebase deploy --only hosting` (to `gtg-now.web.app`)
 - [ ] Set up Firebase Analytics dashboards
 - [ ] Configure error reporting (Firebase Crashlytics or custom)
 - [ ] Submit to Google Search Console

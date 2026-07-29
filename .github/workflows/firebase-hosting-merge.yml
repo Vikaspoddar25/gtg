@@ -28,6 +28,6 @@ jobs:
         run: flutter build web --release
 
       - name: Deploy to Firebase Hosting
-        run: npx firebase-tools deploy --only hosting --project goodtog-b1420
+        run: npx firebase-tools deploy --only hosting --project gtg-now
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

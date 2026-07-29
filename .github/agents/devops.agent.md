@@ -14,7 +14,7 @@ applyTo: "firebase.json,firestore.rules,firestore.indexes.json,.github/workflows
 You are a DevOps specialist for the **GTG** venue discovery app. You handle builds, deployments, Firebase Hosting, and CI/CD.
 
 ## Project Context
-- **Hosting**: Firebase Hosting (`gtg-app.web.app`)
+- **Hosting**: Firebase Hosting (`gtg-now.web.app`)
 - **Region**: `asia-south1` (Mumbai)
 - **Platforms**: Web (primary), Android, iOS
 - **Firebase CLI**: Required (`npm install -g firebase-tools`)
@@ -70,7 +70,7 @@ firebase hosting:channel:deploy preview-branch-name
 7. Deploy: `firebase deploy --only hosting`
 
 ## Post-Deploy Verification
-1. Open `https://gtg-app.web.app` in browser
+1. Open `https://gtg-now.web.app` in browser
 2. Test auth flow (sign in → home)
 3. Check browser console for errors
 4. Verify Firestore reads work

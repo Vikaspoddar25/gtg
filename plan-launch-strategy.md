@@ -7,7 +7,7 @@
 - Free SSL certificate (auto-provisioned)
 - Global CDN (Fastly-backed)
 - One-command deploy: `firebase deploy --only hosting`
-- Free subdomain: `gtg-app.web.app` or `gtg-app.firebaseapp.com`
+- Free subdomain: `gtg-now.web.app` or `gtg-now.firebaseapp.com`
 - Custom domain support when ready
 - Preview channels for staging/testing
 - 10 GB storage + 360 MB/day transfer on free tier
@@ -85,7 +85,7 @@
 ## Domain Strategy
 
 ### Phase 1 (Launch)
-- Use Firebase free subdomain: `gtg-app.web.app`
+- Use Firebase free subdomain: `gtg-now.web.app`
 - Pros: free, instant, SSL included
 - Cons: not branded, not memorable
 
@@ -155,7 +155,7 @@ firebase hosting:channel:deploy staging --expires 7d
 ## Launch Phases
 
 ### Soft Launch (Week 1 post-build)
-- Deploy to `gtg-app.web.app`
+- Deploy to `gtg-now.web.app`
 - Share with 10-20 friends/family for testing
 - Collect feedback via Google Form or in-app feedback
 - Fix critical bugs

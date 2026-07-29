@@ -12,7 +12,7 @@
   - Cloud Firestore (NoSQL, region: `asia-south1`)
   - Firebase Storage (user uploads, venue images)
   - Firebase Cloud Messaging (push notifications)
-  - Firebase Hosting (`gtg-app.web.app`)
+  - Firebase Hosting (`gtg-now.web.app`)
   - Firebase Analytics
 - **Maps**: Mapbox (`mapbox_maps_flutter`)
 - **Payments**: Razorpay (India) — server-side order creation only

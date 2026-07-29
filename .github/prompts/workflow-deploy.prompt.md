@@ -57,7 +57,7 @@ firebase deploy --only firestore:indexes
 ```
 
 ### Step 8 — Post-Deploy Verification
-1. Open `https://gtg-app.web.app`
+1. Open `https://gtg-now.web.app`
 2. Test auth flow end-to-end
 3. Verify Firestore data loads
 4. Check browser console for errors

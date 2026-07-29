@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://goodtog-b1420.web.app/sitemap.xml
+Sitemap: https://gtg-now.web.app/sitemap.xml

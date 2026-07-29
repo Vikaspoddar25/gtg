@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Settings;
 import 'package:provider/provider.dart';
 import 'package:gtg/firebase_options.dart';
 import 'package:gtg/providers/auth_provider.dart';
@@ -14,6 +16,13 @@ import 'package:gtg/services/database_service.dart';
 import 'package:gtg/theme/theme.dart';
 import 'package:gtg/utils/router.dart';
 
+/// Public Mapbox access token, supplied at build/run time via:
+///   flutter run --dart-define=MAPBOX_ACCESS_TOKEN=pk.xxx
+/// Falls back to `/config/app.mapboxPublicToken` in Firestore if unset,
+/// so the token can be rotated without a client release.
+const String _mapboxDartDefineToken =
+    String.fromEnvironment('MAPBOX_ACCESS_TOKEN');
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -25,7 +34,31 @@ Future<void> main() async {
     cacheSizeBytes: 50 * 1024 * 1024, // 50 MB
   );
 
+  await _configureMapbox(firestore);
+
   runApp(const GtgApp());
+}
+
+/// Resolves the Mapbox public access token (dart-define first, else the
+/// remote app config) and applies it before any [MapWidget] is built.
+/// Safe to call even if Mapbox isn't configured yet — maps simply won't
+/// render on Android/iOS until a token is supplied; web always shows the
+/// static map placeholder regardless (see `MiniMapView`), since the stable
+/// Mapbox Flutter SDK has no web renderer yet.
+Future<void> _configureMapbox(FirebaseFirestore firestore) async {
+  if (kIsWeb) return;
+  var token = _mapboxDartDefineToken;
+  if (token.isEmpty) {
+    try {
+      final doc = await firestore.collection('config').doc('app').get();
+      token = doc.data()?['mapboxPublicToken'] as String? ?? '';
+    } catch (_) {
+      // Config doc may not exist yet — non-fatal, maps stay disabled.
+    }
+  }
+  if (token.isNotEmpty) {
+    MapboxOptions.setAccessToken(token);
+  }
 }
 
 class GtgApp extends StatelessWidget {
