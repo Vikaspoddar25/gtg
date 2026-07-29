@@ -563,6 +563,9 @@ class _Step4Hours extends StatelessWidget {
 }
 
 // ── STEP 5: Range in kilometers ─────────────────────────────────────────────
+const _kRoadIllustration =
+    'https://www.figma.com/api/mcp/asset/8f6f7a9a-6975-437e-ab7b-78ab2bca2506';
+
 class _Step5Range extends StatelessWidget {
   final VoidCallback onFind;
   const _Step5Range({required this.onFind});
@@ -576,8 +579,14 @@ class _Step5Range extends StatelessWidget {
         children: [
           const _CardLogo(),
           const SizedBox(height: 8),
-          // Road illustration placeholder
-          Icon(Icons.route, size: 80, color: AppColors.primary),
+          // Road illustration
+          Image.network(
+            _kRoadIllustration,
+            height: 100,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) =>
+                Icon(Icons.route, size: 80, color: AppColors.primary),
+          ),
           const SizedBox(height: 16),
           Text(
             'Select range in kilometeres',

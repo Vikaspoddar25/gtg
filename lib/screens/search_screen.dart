@@ -1,17 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:gtg/models/venue.dart';
+import 'package:gtg/providers/venue_provider.dart';
 import 'package:gtg/theme/app_colors.dart';
 import 'package:gtg/theme/app_tokens.dart';
 
-// ── Figma asset URLs (frame 369:968) ──────────────────────────────────────
-const _kRoadIllustration =
-    'https://www.figma.com/api/mcp/asset/8f6f7a9a-6975-437e-ab7b-78ab2bca2506';
-// Back circle asset from Figma (unused — using Material icon)
-// 'https://www.figma.com/api/mcp/asset/7760c56c-b52d-4ff4-9333-295a0645f043'
-
-/// Search / Find screen — select range in kilometres with a slider.
-///
-/// Figma reference: frame 369:968 (iPhone 14 & 15 Pro Max - 31)
+/// Search / discovery screen — search bar, recent searches, and a live
+/// results list backed by [VenueProvider.searchVenues].
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -20,241 +17,195 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  double _rangeKm = 1;
+  final _controller = TextEditingController();
+  final List<String> _recentSearches = [];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _runSearch(String query) {
+    context.read<VenueProvider>().searchVenues(query);
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+    setState(() {
+      _recentSearches.remove(trimmed);
+      _recentSearches.insert(0, trimmed);
+      if (_recentSearches.length > 5) _recentSearches.removeLast();
+    });
+  }
+
+  void _selectRecent(String query) {
+    _controller.text = query;
+    _runSearch(query);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final venueProvider = context.watch<VenueProvider>();
+
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: Colors.white,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 430),
-          child: Stack(
+          child: Column(
             children: [
-              // ── Gradient background ──
-              Positioned.fill(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFFCE3131),
-                        Color(0xFFE8A56E),
-                      ],
-                    ),
+              // App bar + search field
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Column(
+                    children: [
+                      const Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Search',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight,
+                          borderRadius: BorderRadius.circular(AppRadius.chip),
+                        ),
+                        child: TextField(
+                          controller: _controller,
+                          textInputAction: TextInputAction.search,
+                          onSubmitted: _runSearch,
+                          onChanged: (v) {
+                            if (v.trim().isEmpty) {
+                              context.read<VenueProvider>().clearSearch();
+                            }
+                          },
+                          decoration: const InputDecoration(
+                            hintText: 'Search venues, cities...',
+                            prefixIcon: Icon(Icons.search_rounded,
+                                color: AppColors.primary),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+              const Divider(height: 1, color: AppColors.divider),
 
-              // ── Main content ──
-              Column(
-                children: [
-                  // Top bar
-                  SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-                      child: Row(
-                        children: [
-                          // Back button (white circle)
-                          GestureDetector(
-                            onTap: () => context.pop(),
-                            child: Container(
-                              width: 56,
-                              height: 56,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.chevron_left_rounded,
-                                size: 32,
-                                color: AppColors.primary,
-                              ),
-                            ),
+              // Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_recentSearches.isNotEmpty) ...[
+                        const Text(
+                          'Recent searches',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
                           ),
-                          const SizedBox(width: AppSpacing.md),
-                          // Title
-                          Text(
-                            "Let's Good To Go!",
-                            style: TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 24,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: AppSpacing.lg),
-
-                  // ── White card ──
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(64),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x40000000),
-                              offset: Offset(1, 4),
-                              blurRadius: 12,
-                            ),
-                          ],
                         ),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: AppSpacing.lg),
-
-                            // Road illustration
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.xl),
-                              child: Image.network(
-                                _kRoadIllustration,
-                                height: 198,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, _, _) => const Icon(
-                                  Icons.route_rounded,
-                                  size: 100,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: AppSpacing.lg),
-
-                            // "Select range in kilometres"
-                            Text(
-                              'Select range in kilometeres',
-                              style: AppTextStyles.headingMedium,
-                              textAlign: TextAlign.center,
-                            ),
-
-                            const SizedBox(height: AppSpacing.md),
-
-                            // Range label
-                            Text(
-                              '${_rangeKm.round()}Km',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontSize: 25,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.primary,
-                              ),
-                            ),
-
-                            // Slider
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.xl),
-                              child: SliderTheme(
-                                data: SliderThemeData(
-                                  activeTrackColor: AppColors.primary,
-                                  inactiveTrackColor: const Color(0xFFFFEDED),
-                                  thumbColor: const Color(0xFF710000),
-                                  thumbShape: const RoundedRectSliderThumbShape(
-                                      enabledThumbRadius: 22),
-                                  trackHeight: 44,
-                                  overlayShape: SliderComponentShape.noOverlay,
-                                  trackShape: const RoundedRectSliderTrackShape(),
-                                ),
-                                child: Slider(
-                                  value: _rangeKm,
-                                  min: 1,
-                                  max: 50,
-                                  onChanged: (v) =>
-                                      setState(() => _rangeKm = v),
-                                ),
-                              ),
-                            ),
-
-                            const Spacer(),
-
-                            // Find button (gradient, rounded bottom)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.sm),
-                              child: GestureDetector(
-                                onTap: () {
-                                  // TODO: Navigate to search results
-                                },
-                                child: Container(
-                                  width: double.infinity,
-                                  height: 77,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFDD4D4D),
-                                        Color(0xFFCE3131),
-                                      ],
-                                    ),
-                                    borderRadius: const BorderRadius.only(
-                                      bottomLeft: Radius.circular(52),
-                                      bottomRight: Radius.circular(52),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Find',
-                                        style: TextStyle(
-                                          fontFamily: 'Roboto',
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white,
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _recentSearches
+                              .map((q) => GestureDetector(
+                                    onTap: () => _selectRecent(q),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 14, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface,
+                                        borderRadius: BorderRadius.circular(
+                                            AppRadius.chip),
+                                        border:
+                                            Border.all(color: AppColors.divider),
+                                      ),
+                                      child: Text(
+                                        q,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.textPrimary,
                                         ),
                                       ),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      const Icon(
-                                        Icons.arrow_forward_rounded,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                    ),
+                                  ))
+                              .toList(),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      const Text(
+                        'Search results',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      if (venueProvider.isSearching)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        )
+                      else if (venueProvider.lastQuery.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: Text(
+                              'Search for a venue, cuisine, or city.',
+                              style: TextStyle(
+                                color:
+                                    AppColors.textPrimary.withValues(alpha: 0.6),
                               ),
                             ),
-                          ],
+                          ),
+                        )
+                      else if (venueProvider.searchResults.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: Text(
+                              'No venues found for "${venueProvider.lastQuery}".',
+                              style: TextStyle(
+                                color:
+                                    AppColors.textPrimary.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: venueProvider.searchResults
+                              .map((v) => _SearchResultRow(
+                                    venue: v,
+                                    onTap: () => context.push('/venue/${v.id}'),
+                                  ))
+                              .toList(),
                         ),
-                      ),
-                    ),
+                    ],
                   ),
-
-                  const SizedBox(height: AppSpacing.md),
-
-                  // Progress dots (5 bars)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      5,
-                      (i) => Container(
-                        width: 62,
-                        height: 4,
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: AppSpacing.sm),
-
-
-                ],
+                ),
               ),
             ],
           ),
@@ -264,45 +215,98 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
-/// Custom rounded rectangle thumb for the range slider.
-class RoundedRectSliderThumbShape extends SliderComponentShape {
-  final double enabledThumbRadius;
-
-  const RoundedRectSliderThumbShape({required this.enabledThumbRadius});
-
-  @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
-      Size(enabledThumbRadius * 2, enabledThumbRadius * 2.8);
+// ── Compact search result row ───────────────────────────────────────────────
+class _SearchResultRow extends StatelessWidget {
+  final Venue venue;
+  final VoidCallback onTap;
+  const _SearchResultRow({required this.venue, required this.onTap});
 
   @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required TextDirection textDirection,
-    required double value,
-    required double textScaleFactor,
-    required Size sizeWithOverflow,
-  }) {
-    final canvas = context.canvas;
-    final rect = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-          center: center,
-          width: enabledThumbRadius * 2,
-          height: enabledThumbRadius * 2.8),
-      const Radius.circular(8),
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: CachedNetworkImage(
+                imageUrl: venue.imageUrl,
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
+                placeholder: (_, _) => Container(
+                  width: 56,
+                  height: 56,
+                  color: AppColors.primaryLight,
+                ),
+                errorWidget: (_, _, _) => Container(
+                  width: 56,
+                  height: 56,
+                  color: AppColors.primaryLight,
+                  child:
+                      const Icon(Icons.image_outlined, color: AppColors.primary),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    venue.name,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded,
+                          size: 15, color: Color(0xFFFFB800)),
+                      const SizedBox(width: 2),
+                      Text(venue.rating.toStringAsFixed(1),
+                          style: const TextStyle(fontSize: 12)),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Avg. ₹${venue.avgPricePerPerson}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (venue.category.isNotEmpty)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.statusBlue.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  venue.category,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.statusBlue,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
-    final paint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFFC33C3C), Color(0xFF710000)],
-      ).createShader(rect.outerRect);
-    canvas.drawRRect(rect, paint);
   }
 }
+
