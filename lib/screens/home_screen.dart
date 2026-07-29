@@ -1,14 +1,19 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:gtg/models/venue.dart';
+import 'package:provider/provider.dart';
+import 'package:gtg/providers/venue_provider.dart';
 import 'package:gtg/theme/app_colors.dart';
 import 'package:gtg/theme/app_tokens.dart';
+import 'package:gtg/widgets/mini_map_view.dart';
 import 'package:gtg/widgets/venue_card.dart';
 
+// Default map center — Kalkaji, New Delhi (used until live user location
+// wiring lands; see todo.md Phase D).
+const double _kDefaultLat = 28.5480;
+const double _kDefaultLng = 77.2588;
+const String _kDefaultCity = 'New Delhi';
+
 // ── Figma asset URLs (frame 117:105) ──────────────────────────────────────
-const _kMapBg =
-    'https://www.figma.com/api/mcp/asset/ef3b2113-e20d-4c59-9573-cf024fd77abb';
 const _kGtgLogo =
     'https://www.figma.com/api/mcp/asset/437725d6-17ed-4e89-ae0c-9c9d40359b10';
 const _kFriends =
@@ -39,6 +44,15 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isGroupMode = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<VenueProvider>().loadVenues(city: _kDefaultCity);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -54,13 +68,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 right: 0,
                 child: Opacity(
                   opacity: 0.4,
-                  child: CachedNetworkImage(
-                    imageUrl: _kMapBg,
+                  child: SizedBox(
                     height: 277,
                     width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, _, _) =>
-                        const SizedBox(height: 277),
+                    child: MiniMapView(
+                      latitude: _kDefaultLat,
+                      longitude: _kDefaultLng,
+                      zoom: 13,
+                      showMarker: false,
+                      interactive: false,
+                    ),
                   ),
                 ),
               ),
@@ -72,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── Hero: GTG logo + friends (169px = 259-90) ──────────
-                    const _HeroSection(),
+                    _HeroSection(isGroupMode: _isGroupMode),
 
                     // ── Pink / red gradient content container ─────────────
                     Container(
@@ -101,29 +118,67 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           const SizedBox(height: 24),
 
-                          // "What's near me" chip
+                          // Suggestion chip — copy varies with Group/Person mode
                           Padding(
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 20),
                             child: _WhatNearMeChip(
+                              label: _isGroupMode
+                                  ? "What's near me"
+                                  : 'Want to spend quality time',
                               onTap: () => context.go('/search'),
                             ),
                           ),
 
                           const SizedBox(height: 16),
 
-                          // Venue list
+                          // Venue list — live from Firestore via VenueProvider
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 20),
-                            child: Column(
-                              children: mockVenues
-                                  .map((v) => Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 12),
-                                        child: VenueCard(venue: v),
-                                      ))
-                                  .toList(),
+                            child: Consumer<VenueProvider>(
+                              builder: (context, venueProvider, _) {
+                                if (venueProvider.isLoading) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 24),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                if (venueProvider.venues.isEmpty) {
+                                  return Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 24),
+                                    child: Center(
+                                      child: Text(
+                                        venueProvider.hasError
+                                            ? "Couldn't load venues. Pull to refresh."
+                                            : 'No venues nearby yet.',
+                                        style: const TextStyle(
+                                          fontFamily: 'Roboto',
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return Column(
+                                  children: venueProvider.venues
+                                      .map((v) => Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 12),
+                                            child: VenueCard(
+                                              venue: v,
+                                              onTap: () =>
+                                                  context.push('/venue/${v.id}'),
+                                            ),
+                                          ))
+                                      .toList(),
+                                );
+                              },
                             ),
                           ),
 
@@ -274,9 +329,10 @@ class _TogglePill extends StatelessWidget {
   }
 }
 
-// ── Hero: GTG logo + friends illustration ─────────────────────────────────
+// ── Hero: GTG logo + friends/couple illustration (mode-dependent) ─────────
 class _HeroSection extends StatelessWidget {
-  const _HeroSection();
+  final bool isGroupMode;
+  const _HeroSection({required this.isGroupMode});
 
   @override
   Widget build(BuildContext context) {
@@ -308,23 +364,31 @@ class _HeroSection extends StatelessWidget {
               ),
             ),
           ),
-          // Friends illustration — overlaps bottom of logo
+          // Group/Couple illustration — overlaps bottom of logo.
+          // Couple mode uses an icon placeholder until a final Figma asset
+          // is available (see plan-master-development.md).
           Positioned(
             top: 57,
             left: 0,
             right: 0,
             child: Center(
-              child: Image.network(
-                _kFriends,
-                width: 216,
-                height: 112,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Icon(
-                  Icons.people_alt_rounded,
-                  size: 90,
-                  color: AppColors.primary,
-                ),
-              ),
+              child: isGroupMode
+                  ? Image.network(
+                      _kFriends,
+                      width: 216,
+                      height: 112,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.people_alt_rounded,
+                        size: 90,
+                        color: AppColors.primary,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.favorite_rounded,
+                      size: 90,
+                      color: AppColors.primary,
+                    ),
             ),
           ),
         ],
@@ -437,10 +501,11 @@ class _LetsGoCard extends StatelessWidget {
   }
 }
 
-// ── "What's near me" chip ──────────────────────────────────────────────────
+// ── Suggestion chip (copy varies with Group/Person mode) ──────────────────
 class _WhatNearMeChip extends StatelessWidget {
+  final String label;
   final VoidCallback onTap;
-  const _WhatNearMeChip({required this.onTap});
+  const _WhatNearMeChip({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +513,7 @@ class _WhatNearMeChip extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 40,
-        width: 165,
+        constraints: const BoxConstraints(minWidth: 165),
         padding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
         decoration: BoxDecoration(
@@ -457,9 +522,9 @@ class _WhatNearMeChip extends StatelessWidget {
           boxShadow: const [AppShadows.card],
         ),
         alignment: Alignment.center,
-        child: const Text(
-          "What's near me",
-          style: TextStyle(
+        child: Text(
+          label,
+          style: const TextStyle(
             fontFamily: 'Roboto',
             fontSize: 18,
             fontWeight: FontWeight.w500,
